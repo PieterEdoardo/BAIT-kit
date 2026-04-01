@@ -1,5 +1,5 @@
+#include <elf.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "elf_parser.h"
 
 int main(int argc, char **argv) {
@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 
 	bait_elf_t elf = {0};
 
-	if (bait_elf_load(argv[0], &elf) < 0) {
+	if (bait_elf_load(argv[1], &elf) < 0) {
 		fprintf(stderr, "failed to load ELF: %s\n", argv[1]);
 		return 1;
 	}

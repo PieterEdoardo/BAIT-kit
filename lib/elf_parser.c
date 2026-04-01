@@ -27,27 +27,32 @@ static int validate_elf(bait_elf_t *elf) {
 }
 
 int bait_elf_load(const char *path, bait_elf_t *elf) {
-    int fd = open(path, O_RDWR);       // RDWR — we'll patch in place later
-    if (fd < 0)
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        perror("open");
         return -1;
+    }
 
     struct stat st;
     if (fstat(fd, &st) < 0) {
+        perror("fstat");
         close(fd);
         return -1;
     }
 
     elf->size = st.st_size;
-    elf->base = mmap(NULL, elf->size, PROT_READ | PROT_WRITE,
-                     MAP_SHARED, fd, 0);
-    close(fd);                         // fd no longer needed after mmap
+    elf->base = mmap(NULL, elf->size, PROT_WRITE | PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
 
-    if (elf->base == MAP_FAILED)
+    if (elf->base == MAP_FAILED) {
+        perror("mmap");
         return -1;
+    }
 
-    elf->ehdr  = (Elf64_Ehdr *)elf->base;
+    elf->ehdr = (Elf64_Ehdr *)elf->base;
 
     if (validate_elf(elf) < 0) {
+        fprintf(stderr, "validate_elf failed — not a valid ELF64 LE binary\n");
         bait_elf_free(elf);
         return -1;
     }
