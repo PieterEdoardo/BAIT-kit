@@ -31,7 +31,19 @@ int main(int argc, char **argv) {
 			   text->sh_offset, text->sh_size);
 	else
 		printf(".text not found (stripped?)\n");
+	printf("\n=== Segments ===\n");
+	bait_elf_print_segments(&elf);
 
+	// test the translator using .text's virtual address
+	// .text sh_addr is its VA, we should get back sh_offset
+	if (text) {
+		int64_t off = bait_elf_va_to_offset(&elf, text->sh_addr);
+		printf("\n=== VA→offset check ===\n");
+		printf(".text VA:            0x%lx\n", text->sh_addr);
+		printf(".text file offset:   0x%lx\n", text->sh_offset);
+		printf("translated offset:   0x%lx\n", off);
+		printf("match: %s\n", off == (int64_t)text->sh_offset ? "YES" : "NO");
+	}
 	bait_elf_free(&elf);
 	return 0;
 }

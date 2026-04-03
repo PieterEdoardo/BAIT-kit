@@ -93,3 +93,79 @@ void bait_elf_print_sections(bait_elf_t *elf) {
                s->sh_size);
     }
 }
+
+static const char *phdr_type_str(uint32_t type) {
+    switch (type) {
+        case PT_NULL:         return "NULL";
+        case PT_LOAD:         return "LOAD";
+        case PT_DYNAMIC:      return "DYNAMIC";
+        case PT_INTERP:       return "INTERP";
+        case PT_NOTE:         return "NOTE";
+        case PT_SHLIB:        return "SHLIB";
+        case PT_PHDR:         return "PHDR";
+        case PT_TLS:          return "TLS";
+        case PT_GNU_EH_FRAME: return "GNU_EH_FRAME";
+        case PT_GNU_STACK:    return "GNU_STACK";
+        case PT_GNU_RELRO:    return "GNU_RELRO";
+        default:              return "UNKNOWN";
+    }
+}
+
+void bait_elf_print_segments(bait_elf_t *elf) {
+    printf("%-16s %-10s %-18s %-18s %-10s %-10s %-6s\n",
+       "Type", "Flags", "File offset", "Virt addr",
+       "File size", "Mem size", "Align");
+
+    for (int i = 0; i < elf->ehdr->e_shnum; i++) {
+        Elf64_Phdr *p = &elf->phdrs[i];
+
+        // decode flags into RWX string
+        char flags[4] = "---";
+        if (p->p_flags & PF_R) flags[0] = 'R';
+        if (p->p_flags & PF_W) flags[0] = 'W';
+        if (p->p_flags & PF_X) flags[0] = 'X';
+
+        printf("%-16s %-10s 0x%-16lx 0x%-16lx 0x%-8lx 0x%-8lx 0x%lx\n",
+           phdr_type_str(p->p_type),
+           flags,
+           p->p_offset,
+           p->p_vaddr,
+           p->p_filesz,
+           p->p_memsz,
+           p->p_align
+        );
+
+        // for INTERP, print the interpreter path directly
+        // it's a null-terminated string sitting at p_offset in the file
+        if (p->p_type == PT_INTERP) {
+            printf("[Requesting program interpreter: %s]\n",
+                   (char *)(elf->base + p->p_offset));
+        }
+    }
+}
+
+Elf64_Phdr *bait_elf_find_segment(bait_elf_t *elf, uint32_t type) {
+    for (int i = 0; i < elf->ehdr->e_phnum; i++) {
+        if (elf->phdrs[i].p_type == type) {
+            return &elf->phdrs[i];
+        }
+    }
+
+    return NULL;
+}
+
+int64_t bait_elf_va_to_offset(bait_elf_t *elf, uint64_t vaddr) {
+    for (int i = 0; i < elf->ehdr->e_phnum; i++) {
+        Elf64_Phdr *p = &elf->phdrs[i];
+
+        if (p->p_type != PT_LOAD)
+            continue;
+
+        // check VA falls within the file-backed portion of this segment
+        // deliberately use p_filesz not p_memsz — .bss has no file backing
+        if (vaddr >= p->p_vaddr && vaddr < p->p_vaddr + p->p_filesz)
+            return (int64_t)(p->p_vaddr + (vaddr -p->p_vaddr));
+    }
+
+    return -1;  // no PT_LOAD segment owns this VA
+}

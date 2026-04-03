@@ -1,6 +1,8 @@
 #project
 /.idea
 /bin
+/tests/hw
+/tests/test
 
 
 # Prerequisites

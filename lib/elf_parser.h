@@ -20,4 +20,10 @@ void bait_elf_free(bait_elf_t *elf);
 Elf64_Shdr *bait_elf_find_section(bait_elf_t *elf, const char *name);
 void        bait_elf_print_sections(bait_elf_t *elf);
 
+Elf64_Phdr *bait_elf_find_segment(bait_elf_t *elf, uint32_t type);
+void bait_elf_print_segments(bait_elf_t *elf);
+
+int64_t bait_elf_va_to_offset(bait_elf_t *elf, Elf64_Addr vaddr);
+
+
 #endif
