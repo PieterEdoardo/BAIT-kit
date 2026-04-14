@@ -116,7 +116,7 @@ void bait_elf_print_segments(bait_elf_t *elf) {
        "Type", "Flags", "File offset", "Virt addr",
        "File size", "Mem size", "Align");
 
-    for (int i = 0; i < elf->ehdr->e_shnum; i++) {
+    for (int i = 0; i < elf->ehdr->e_phnum; i++) {
         Elf64_Phdr *p = &elf->phdrs[i];
 
         // decode flags into RWX string

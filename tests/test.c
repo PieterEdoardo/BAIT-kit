@@ -32,8 +32,9 @@ int main(int argc, char **argv) {
 	else
 		printf(".text not found (stripped?)\n");
 	printf("\n=== Segments ===\n");
-	bait_elf_print_segments(&elf);
+	printf("DEBUG e_phnum: %d\n", elf.ehdr->e_phnum);
 
+	bait_elf_print_segments(&elf);
 	// test the translator using .text's virtual address
 	// .text sh_addr is its VA, we should get back sh_offset
 	if (text) {

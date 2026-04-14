@@ -6,13 +6,14 @@
 #include <stddef.h>
 
 typedef struct {
-    uint8_t    *base;       // mmap base pointer
-    size_t      size;       // file size
-    Elf64_Ehdr *ehdr;       // ELF header (points into base)
-    Elf64_Shdr *shdrs;      // section header array
-    Elf64_Phdr *phdrs;      // program header array
-    const char *shstrtab;   // section name string table
+    uint8_t    *base;           // mmap base pointer
+    size_t      size;           // file size
+    Elf64_Ehdr *ehdr;           // ELF header (points into base)
+    Elf64_Shdr *shdrs;          // section header array
+    Elf64_Phdr *phdrs;          // program header array
+    const char *shstrtab;       // section name string table
 } bait_elf_t;
+
 
 int  bait_elf_load(const char *path, bait_elf_t *elf);
 void bait_elf_free(bait_elf_t *elf);
