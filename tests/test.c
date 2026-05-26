@@ -45,6 +45,18 @@ int main(int argc, char **argv) {
 		printf("translated offset:   0x%lx\n", off);
 		printf("match: %s\n", off == (int64_t)text->sh_offset ? "YES" : "NO");
 	}
+
+	printf("\n=== Dynamic ===\n");
+	if (bait_elf_parse_dynamic(&elf) == 0) {
+		printf("dynamic entries: %zu\n", elf.dynamic_count);
+		printf("has_bind_now:    %d\n",  elf.has_bind_now);
+		printf("dt_flags:        0x%lx\n", elf.dt_flags);
+		printf("dt_strtab_va:    0x%lx\n", elf.dt_strtab_va);
+		printf("dt_symtab_va:    0x%lx\n", elf.dt_symtab_va);
+	} else {
+		printf("no .dynamic section (statically linked?)\n");
+	}
+
 	bait_elf_free(&elf);
 	return 0;
 }

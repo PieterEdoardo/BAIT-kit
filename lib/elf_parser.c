@@ -26,6 +26,39 @@ static int validate_elf(bait_elf_t *elf) {
     return 0;
 }
 
+int bait_elf_parse_dynamic(bait_elf_t *elf) {
+    Elf64_Phdr* phdr = bait_elf_find_segment(elf, PT_DYNAMIC);
+    if (phdr == NULL) {
+        return -1;
+    }
+
+    Elf64_Dyn* dyn = (Elf64_Dyn*)(elf->base + phdr->p_offset);
+
+    elf->dynamic = dyn;
+
+    while (dyn->d_tag != DT_NULL) {
+        switch (dyn->d_tag) {
+            case DT_BIND_NOW:
+                elf->has_bind_now = 1;
+                break;
+            case DT_FLAGS:
+                elf->dt_flags = dyn->d_un.d_val;
+                break;
+            case DT_STRTAB:
+                elf->dt_strtab_va = dyn->d_un.d_ptr;
+                break;
+            case DT_SYMTAB:
+                elf->dt_symtab_va = dyn->d_un.d_ptr;
+                break;
+            default:
+                break;
+        }
+        elf->dynamic_count++;
+        dyn++;
+    }
+    return 0;
+}
+
 int bait_elf_load(const char *path, bait_elf_t *elf) {
     int fd = open(path, O_RDONLY);
     if (fd < 0) {
@@ -168,4 +201,16 @@ int64_t bait_elf_va_to_offset(bait_elf_t *elf, uint64_t vaddr) {
     }
 
     return -1;  // no PT_LOAD segment owns this VA
+}
+
+bait_checksec_t bait_elf_checksec(bait_elf_t *elf) {
+
+    if (bait_elf_parse_dynamic(elf)) {
+
+    }
+
+    if (bait_elf_find_segment(elf, PT_LOAD)) {
+
+    }
+
 }
