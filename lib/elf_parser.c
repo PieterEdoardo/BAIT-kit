@@ -203,14 +203,39 @@ int64_t bait_elf_va_to_offset(bait_elf_t *elf, uint64_t vaddr) {
     return -1;  // no PT_LOAD segment owns this VA
 }
 
-bait_checksec_t bait_elf_checksec(bait_elf_t *elf) {
+bait_checksec_t bait_elf_checksec(bait_elf_t* elf) {
+    bait_checksec_t checksec = {0};
 
-    if (bait_elf_parse_dynamic(elf)) {
-
+    // PIE
+    if (elf->ehdr->e_type == ET_DYN) {
+        checksec.PIE = 1;
+    } else if (elf->ehdr->e_type == ET_EXEC) {
+        checksec.PIE = 0;
     }
 
-    if (bait_elf_find_segment(elf, PT_LOAD)) {
+    // NX
+    Elf64_Phdr* stack = bait_elf_find_segment(elf, PT_GNU_STACK);
+    if (stack != NULL) checksec.NX = !(stack->p_flags & PF_X);
 
+    // RELRO
+    Elf64_Phdr* relro = bait_elf_find_segment(elf, PT_GNU_RELRO);
+    if (relro == NULL) {
+        checksec.RELRO = 0;
+    } else if (elf->has_bind_now || elf->dt_flags & DF_BIND_NOW) {
+        checksec.RELRO = 2;
+    } else {
+        checksec.RELRO = 1;
     }
 
+    // Stack Canary
+    // bait_elf_find_section(elf, ".dynsym")
+    checksec.stack = 0;
+
+    if (!bait_elf_find_section(elf, ".symtab")) {
+        checksec.stripped = 1;
+    } else {
+        checksec.stripped = 0;
+    }
+
+    return checksec;
 }

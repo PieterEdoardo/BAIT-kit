@@ -57,6 +57,22 @@ int main(int argc, char **argv) {
 		printf("no .dynamic section (statically linked?)\n");
 	}
 
+	printf("\n=== Checksec ===\n");
+	bait_checksec_t checksec = bait_elf_checksec(&elf);
+	printf("PIE:        %s\n", checksec.PIE ? "PIE" : "No PIE");
+	printf("NX:         %s\n", checksec.NX ? "NX enabled" : "NX disabled");
+	if (checksec.RELRO == 0) {
+		printf("RELRO:      %s\n", "None");
+	} else if (checksec.RELRO == 1) {
+		printf("RELRO:      %s\n", "Partial");
+	} else if (checksec.RELRO == 2) {
+		printf("RELRO:      %s\n", "Full");
+	}
+	printf("Stack:      %s\n", "Not Implemented");
+	printf("Stripped:	%s\n", checksec.stripped ? "Stripped binary" : "Not stripped binary");
+
+
+
 	bait_elf_free(&elf);
 	return 0;
 }
